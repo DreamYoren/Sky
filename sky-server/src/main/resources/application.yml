@@ -11,7 +11,11 @@ spring:
     username: root
     password: Wf142857.
     driver-class-name: com.mysql.cj.jdbc.Driver
-
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
 mybatis:
   #mapper配置文件
   mapper-locations: classpath:mapper/*.xml
