@@ -1,7 +1,9 @@
 package com.sky.controller.admin;
 
+import com.sky.constant.StatusConstant;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
+import com.sky.entity.Setmeal;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.SetmealService;
@@ -10,6 +12,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +35,7 @@ import java.util.List;
          */
         @PostMapping
         @ApiOperation("新增套餐")
+        @CacheEvict(cacheNames = "setmealCache",key = "#setmealDTO.categoryId")
         public Result save(@RequestBody SetmealDTO setmealDTO) {
             setmealService.saveWithDish(setmealDTO);
             return Result.success();
@@ -45,11 +50,23 @@ import java.util.List;
 
         @DeleteMapping
         @ApiOperation("批量删除套餐")
+        @CacheEvict(cacheNames = "setmealCache",allEntries = true)
         public Result delete(@RequestParam List<Long> ids){
             setmealService.deleteBatch(ids);
             return Result.success();
         }
 
+        @GetMapping("/list")
+        @ApiOperation("根据分类id查询")
+        @Cacheable(cacheNames = "setmealCache",key = "$categoryId")
+        public Result<List<Setmeal>> list(Long categoryId) {
+            Setmeal setmeal = new Setmeal();
+            setmeal.setCategoryId(categoryId);
+            setmeal.setStatus(StatusConstant.ENABLE);
+
+            List<Setmeal> list = setmealService.list(setmeal);
+            return Result.success(list);
+        }
         /**
          * 根据id查询套餐，用于修改页面回显数据
          *
@@ -71,6 +88,7 @@ import java.util.List;
          */
         @PutMapping
         @ApiOperation("修改套餐")
+        @CacheEvict(cacheNames = "setmealCache",allEntries = true)
         public Result update(@RequestBody SetmealDTO setmealDTO) {
             setmealService.update(setmealDTO);
             return Result.success();
@@ -84,6 +102,7 @@ import java.util.List;
          */
         @PostMapping("/status/{status}")
         @ApiOperation("套餐起售停售")
+        @CacheEvict(cacheNames = "setmealCache",allEntries = true)
         public Result startOrStop(@PathVariable Integer status, Long id) {
             setmealService.startOrStop(status, id);
             return Result.success();
